@@ -1,0 +1,818 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Four Pillars Clinic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: cartoon exam room on top (the game stage), clipboard + medicine cabinet below; stacks on phones. Deliberate single look: navy arcade frame around a bright clinic. */
+:root{
+  color-scheme:dark;
+  --bg:#1d2340; --navy-2:#283057; --navy-3:#39437a; --ink:#f4f1ff; --muted:#aab1d8;
+  --panel:#fff8ec; --panel-2:#f3e9d6; --pink:#2a2438; --pmuted:#7a7088; --line:#e3d6bf;
+  --gold:#ffc94a; --gold-dk:#c98f00; --gold-ink:#3a2a00;
+  --c-raas:#8e6cf0; --c-bb:#3d8ef0; --c-mra:#f08a3d; --c-sglt:#2fbf8a; --c-loop:#38b6d8;
+  --good:#22a85a; --warn:#d99100; --bad:#e5484d; --miss:#c64fd8;
+  --f-display:'Fredoka','Nunito',system-ui,sans-serif;
+  --f-body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0 40px;
+  background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.06) 1px,transparent 0);background-size:22px 22px}
+*{box-sizing:border-box}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1;font-weight:700}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.game{max-width:1120px;margin:0 auto}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.tag{font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+
+/* buttons */
+.btn{font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:.02em;border-radius:14px;padding:12px 24px;cursor:pointer;border:3px solid var(--pink);transition:transform .08s}
+.btn.gold{background:var(--gold);color:var(--gold-ink);box-shadow:0 5px 0 var(--pink)}
+.btn.plain{background:var(--panel);color:var(--pink);box-shadow:0 5px 0 var(--pink)}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--pink)}
+.link{background:none;border:0;color:var(--gold);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;font-weight:700}
+
+/* HUD */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding-block:10px;background:var(--bg)}
+.chip{display:flex;align-items:center;gap:8px;background:var(--navy-2);border:2px solid var(--navy-3);border-radius:999px;padding:5px 14px;font-family:var(--f-display);font-weight:600}
+.chip .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chip b{font-family:var(--f-mono);font-size:16px}
+.grow{flex:1}
+.dots{display:flex;gap:4px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--navy-3)}
+.dots i.on{background:var(--gold)}
+.dots i.now{background:var(--ink);box-shadow:0 0 0 2px var(--gold)}
+.hearts{display:flex;gap:3px}
+.hearts svg{width:20px;height:20px}
+.pmeter{width:110px;height:12px;border-radius:6px;background:var(--navy-3);overflow:hidden;border:2px solid var(--pink)}
+.pmeter span{display:block;height:100%;background:linear-gradient(90deg,var(--c-raas),var(--c-bb),var(--c-mra),var(--c-sglt))}
+.homebtn{background:var(--gold);border:3px solid var(--pink);border-radius:12px;width:40px;height:40px;cursor:pointer;display:grid;place-items:center;box-shadow:0 3px 0 var(--pink)}
+
+/* stage */
+.ticker{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.tick{background:var(--bad);color:#fff;border:3px solid var(--pink);border-radius:12px;padding:8px 14px;font-weight:700;font-size:14px}
+.tick.note{background:var(--navy-2);border-color:var(--navy-3);color:var(--ink);font-weight:600}
+.stage{position:relative;border-radius:22px;overflow:hidden;border:4px solid var(--pink);box-shadow:0 8px 0 rgba(0,0,0,.35);background:#cfe9e4}
+.stage svg.room{display:block;width:100%;height:auto}
+.bubbles{position:absolute;inset:0;pointer-events:none}
+.bubble{position:absolute;background:#fff;color:var(--pink);border:3px solid var(--pink);border-radius:18px;padding:9px 13px 10px;font-size:clamp(12px,1.35vw,15px);line-height:1.35;box-shadow:0 4px 0 rgba(42,36,56,.25)}
+.bubble .who{display:block;font-family:var(--f-display);font-weight:700;font-size:.8em;letter-spacing:.06em;text-transform:uppercase;color:var(--pmuted);margin-bottom:2px}
+.bubble::after{content:"";position:absolute;bottom:-14px;width:22px;height:22px;background:#fff;border-right:3px solid var(--pink);border-bottom:3px solid var(--pink);transform:rotate(45deg) skew(8deg,8deg)}
+.bubble.pt{left:58.5%;top:3.5%;width:37%}
+.bubble.pt::after{left:22px;bottom:-12px;transform:rotate(45deg)}
+.bubble.doc{left:3%;top:3.5%;width:31%}
+.bubble.doc::after{right:28%;bottom:-12px;transform:rotate(45deg)}
+.bubble{animation:pop .35s cubic-bezier(.3,1.6,.5,1) both}
+.bubble.doc{animation-delay:.5s}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.weekcard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--gold);color:var(--gold-ink);border:4px solid var(--pink);border-radius:18px;padding:12px 28px;text-align:center;font-family:var(--f-display);pointer-events:none;animation:weekfade 1.9s ease-in both}
+.weekcard b{display:block;font-size:34px;line-height:1}
+@keyframes weekfade{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}15%{opacity:1;transform:translate(-50%,-50%) scale(1)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%)}}
+#pt.walk{animation:walkin 1.1s cubic-bezier(.25,.9,.35,1.05) both .3s}
+@keyframes walkin{from{transform:translateX(380px)}60%{transform:translateX(-10px)}to{transform:translateX(0)}}
+.bob{animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.ecg{animation:ecg linear infinite}
+@keyframes ecg{to{transform:translateX(-80px)}}
+.breath{animation:breath 1.2s ease-in-out infinite}
+@keyframes breath{50%{opacity:.15}}
+.spin{transform-box:view-box;animation:spin 2.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* board */
+.board{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.1fr);gap:16px;margin-top:18px;align-items:start}
+.card{background:var(--panel);color:var(--pink);border:3px solid var(--pink);border-radius:18px;padding:16px;box-shadow:0 5px 0 rgba(0,0,0,.3);min-width:0}
+.card h2{font-size:22px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card .sub{font-family:var(--f-body);font-size:13px;color:var(--pmuted);font-weight:600}
+.clip{position:relative;padding-top:24px}
+.clip::before{content:"";position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:90px;height:22px;border-radius:6px;background:#b9bfc9;border:3px solid var(--pink)}
+.lab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:baseline;padding:8px 0;border-bottom:2px dashed var(--line)}
+.lab:last-child{border-bottom:0}
+.lab .n{font-weight:700}
+.lab .v{font-family:var(--f-mono);font-size:20px;font-weight:700;text-align:right}
+.lab .u{font-size:12px;color:var(--pmuted);grid-column:1}
+.lab .d{font-family:var(--f-mono);font-size:12px;color:var(--pmuted);text-align:right}
+.lab .flag{display:inline-block;font-family:var(--f-display);font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:0 6px;margin-left:6px;vertical-align:2px}
+.flag.warn{background:var(--warn)}.flag.bad{background:var(--bad)}
+.hx{font-size:13px;color:var(--pmuted);margin-top:10px;border-top:2px solid var(--line);padding-top:10px}
+
+.shelf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.bottle{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;--cc:var(--c-raas)}
+.b-raas{--cc:var(--c-raas)}.b-bb{--cc:var(--c-bb)}.b-mra{--cc:var(--c-mra)}.b-sglt{--cc:var(--c-sglt)}.b-loop{--cc:var(--c-loop)}
+.bname{text-align:center;min-height:42px}
+.bname .cls{font-family:var(--f-display);font-weight:700;font-size:15px;color:var(--cc);filter:brightness(.8)}
+.bname .drug{font-size:12px;color:var(--pmuted);font-weight:700;line-height:1.2}
+.cap{width:58%;height:18px;background:var(--cc);border:3px solid var(--pink);border-bottom:0;border-radius:7px 7px 0 0;position:relative}
+.cap::after{content:"";position:absolute;inset:3px 8px auto;height:3px;background:rgba(255,255,255,.5);border-radius:2px}
+.jar{width:100%;height:150px;border:3px solid var(--pink);border-radius:12px 12px 18px 18px;background:#e8f2f7;padding:8px;display:flex;flex-direction:column;gap:5px;position:relative;margin-top:-8px}
+.jar::before{content:"";position:absolute;left:6px;top:8px;bottom:10px;width:5px;border-radius:3px;background:rgba(255,255,255,.8);z-index:1}
+.goal{position:absolute;top:-12px;right:-8px;background:var(--gold);border:2px solid var(--pink);border-radius:8px;font-family:var(--f-display);font-weight:700;font-size:10px;padding:0 5px;color:var(--gold-ink);z-index:2}
+.seg{flex:1;border-radius:8px;border:2px dashed #b3c0cc;transition:background .2s}
+.seg.on{background-color:var(--cc);border:2px solid rgba(42,36,56,.35);background-image:radial-gradient(ellipse 9px 5px at 30% 50%,rgba(255,255,255,.55) 98%,transparent),radial-gradient(ellipse 9px 5px at 68% 50%,rgba(255,255,255,.4) 98%,transparent)}
+.seg.on.ace{opacity:.45}
+.seg.up{background:repeating-linear-gradient(135deg,var(--cc) 0 6px,transparent 6px 12px);border:2px solid var(--cc);animation:glow 1s ease-in-out infinite}
+@keyframes glow{50%{opacity:.6}}
+.seg.down{border:2px dashed var(--bad);background:rgba(229,72,77,.12)}
+.seg.sw{background:repeating-linear-gradient(135deg,var(--c-raas) 0 6px,#fff 6px 12px);border:2px solid var(--c-raas)}
+.dose{font-family:var(--f-mono);font-size:11.5px;text-align:center;min-height:32px;line-height:1.35;font-weight:500}
+.dose b{color:var(--cc);filter:brightness(.75)}
+.acts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;width:100%}
+.act{font-family:var(--f-display);font-weight:700;font-size:12px;padding:6px 0;letter-spacing:-.01em;overflow:hidden;background:#fff;color:var(--pink);border:2px solid var(--pink);border-radius:9px;box-shadow:0 3px 0 var(--pink);cursor:pointer;min-width:0}
+.act[aria-pressed="true"]{background:var(--cc);color:#fff;transform:translateY(2px);box-shadow:0 1px 0 var(--pink)}
+.act:disabled{opacity:.3;cursor:not-allowed}
+.switch{display:grid;gap:5px;width:100%}
+.switch .act{font-size:11.5px;padding:6px 6px;line-height:1.2}
+.locked{font-size:12px;color:var(--bad);font-weight:700;text-align:center}
+.loop{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1.1fr);gap:14px;align-items:center;margin-top:16px;padding-top:14px;border-top:2px dashed var(--line)}
+.loop .bname{text-align:left;min-height:0}
+.hjar{display:flex;gap:5px;height:34px;border:3px solid var(--pink);border-radius:10px;background:#e8f2f7;padding:5px}
+.hjar .seg{flex:1}
+.signrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+.signrow .cnt{font-weight:700;color:var(--pmuted)}
+
+/* review modal */
+.scrim{position:fixed;inset:0;background:rgba(10,12,28,.72);z-index:20}
+.modal{position:fixed;z-index:21;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,calc(100% - 24px));max-height:90vh;overflow:auto;animation:modalin .35s cubic-bezier(.3,1.4,.5,1)}
+@keyframes modalin{from{transform:translate(-50%,-40%) scale(.9);opacity:0}}
+.rev-head{display:flex;gap:14px;align-items:center;margin-bottom:8px}
+.rev-head svg{width:84px;height:84px;flex-shrink:0;border-radius:50%;background:#cfe9e4;border:3px solid var(--pink)}
+.verdict{font-size:26px}
+.item{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:2px dashed var(--line);font-size:14.5px}
+.badge{font-family:var(--f-display);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#fff;border-radius:8px;padding:2px 0;text-align:center}
+.bg-good{background:var(--good)}.bg-caution{background:var(--warn)}.bg-miss{background:var(--miss)}.bg-harm{background:var(--bad)}
+.pts{font-family:var(--f-mono);font-weight:700;font-size:14px}
+.c-good{color:var(--good)}.c-caution{color:var(--warn)}.c-miss{color:var(--miss)}.c-harm{color:var(--bad)}
+.rev-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.big{font-family:var(--f-display);font-weight:700;font-size:28px}
+
+/* title */
+.title-stage{position:relative;margin-top:16px}
+.title-over{position:absolute;left:4%;bottom:7%;max-width:52%;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.logo{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,6vw,64px);line-height:.95;color:var(--gold);-webkit-text-stroke:3px var(--pink);paint-order:stroke fill;text-shadow:0 5px 0 var(--pink)}
+.logo small{display:block;font-size:.45em;color:#fff;-webkit-text-stroke:2px var(--pink);text-shadow:0 3px 0 var(--pink)}
+.intro{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;margin-top:18px}
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.rules div b{display:block;font-family:var(--f-display);font-size:16px}
+.rules div{font-size:14px;color:var(--pmuted)}
+.avatars{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.avatar{background:#cfe9e4;border:3px solid var(--pink);border-radius:50%;width:66px;height:66px;padding:0;cursor:pointer;overflow:hidden;box-shadow:0 3px 0 var(--pink)}
+.avatar[aria-pressed="true"]{outline:4px solid var(--gold);outline-offset:2px}
+.avatar svg{width:100%;height:100%;display:block}
+.field label{display:block;font-family:var(--f-display);font-weight:600;margin-bottom:4px}
+.field input{width:100%;background:#fff;border:3px solid var(--pink);border-radius:10px;padding:9px 12px;font:inherit;color:var(--pink)}
+.cases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px}
+.case{text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:transform .12s}
+.case:hover{transform:translateY(-3px)}
+.case .top{display:flex;gap:12px;align-items:center}
+.case .top svg{width:72px;height:72px;flex-shrink:0;border-radius:16px;background:#cfe9e4;border:3px solid var(--pink)}
+.case h3{font-size:21px}
+.stars{color:var(--gold-dk);letter-spacing:2px;font-size:15px}
+.case p{font-size:14px;color:var(--pmuted)}
+.vit{font-family:var(--f-mono);font-size:11.5px;display:flex;flex-wrap:wrap;gap:2px 10px;font-weight:500}
+.done{font-family:var(--f-display);font-weight:700;color:var(--good);font-size:14px}
+.foot{margin-top:28px;color:var(--muted);font-size:13px;max-width:85ch}
+.secheader{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:26px;flex-wrap:wrap}
+.secheader h2{font-size:26px}
+
+/* debrief */
+.deb{display:flex;flex-direction:column;gap:18px;padding-top:18px}
+.deb-hero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center}
+.deb-hero svg{width:120px;height:120px;border-radius:24px;background:#cfe9e4;border:3px solid var(--pink)}
+.bigstars{font-size:40px;letter-spacing:4px;color:var(--gold);-webkit-text-stroke:2px var(--pink);paint-order:stroke fill}
+.bigstars .off{color:var(--panel-2)}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.metric{background:var(--panel);color:var(--pink);border:3px solid var(--pink);border-radius:14px;padding:12px;min-width:0}
+.metric .k{font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--pmuted)}
+.metric b{display:block;font-family:var(--f-mono);font-size:26px}
+.metric .s{font-size:12.5px;color:var(--pmuted);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:100px minmax(0,1fr) 44px;gap:10px;align-items:center;font-weight:700;font-size:14px}
+.track{height:14px;border:2px solid var(--pink);border-radius:8px;background:#e8f2f7;overflow:hidden}
+.track span{display:block;height:100%;background:var(--cc)}
+.bsub{font-size:12px;color:var(--pmuted);margin:-6px 0 0 110px;font-weight:600}
+.teach{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+th,td{text-align:left;padding:9px 10px;border-bottom:2px dashed var(--line)}
+th{font-family:var(--f-display);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--pmuted)}
+td.n{font-family:var(--f-mono)}
+textarea.copybox{width:100%;min-height:150px;border:3px solid var(--pink);border-radius:10px;font-family:var(--f-mono);font-size:12px;padding:10px;color:var(--pink);background:#fff}
+.reftbl td:first-child{font-weight:800}
+
+@media (max-width:900px){
+  .board{grid-template-columns:1fr}
+  .cases{grid-template-columns:1fr}
+  .intro{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .two{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .bubbles{position:static;display:flex;flex-direction:column;gap:12px;padding:12px;background:var(--navy-2)}
+  .bubble{position:relative;left:auto;top:auto;width:auto!important;font-size:14px}
+  .bubble.doc{order:2}
+  .bubble::after{display:none}
+  .title-over{position:static;max-width:none;padding:14px;background:var(--navy-2)}
+  .shelf{grid-template-columns:1fr 1fr}
+  .loop{grid-template-columns:1fr}
+  .deb-hero{grid-template-columns:auto minmax(0,1fr)}
+  .deb-hero .scorebox{grid-column:1/-1}
+  .item{grid-template-columns:76px minmax(0,1fr)}
+  .item .pts{grid-column:2}
+  .rules{grid-template-columns:1fr}
+  .pmeter{width:70px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app" class="game"></div>
+
+<script>
+const VISITS=6;
+const PTS={good:100,caution:-25,miss:-60,harm:-150};
+const LABEL={good:'Sound',caution:'Caution',miss:'Missed',harm:'Unsafe'};
+const SLOTS=['raas','bb','mra','sglt'];
+const DR={
+  ACEi:{cls:'ACE inhibitor',name:'Lisinopril',doses:['Not started','5 mg daily','10 mg daily','20 mg daily'],max:3},
+  ARNI:{cls:'ARNI',name:'Sacubitril/valsartan',doses:['Not started','24/26 mg bid','49/51 mg bid','97/103 mg bid'],max:3},
+  bb:{cls:'Beta-blocker',name:'Carvedilol',doses:['Not started','3.125 mg bid','6.25 mg bid','12.5 mg bid','25 mg bid'],max:4},
+  mra:{cls:'MRA',name:'Spironolactone',doses:['Not started','12.5 mg daily','25 mg daily'],max:2},
+  sglt:{cls:'SGLT2i',name:'Dapagliflozin',doses:['Not started','10 mg daily'],max:1},
+  loop:{cls:'Loop diuretic',name:'Furosemide',doses:['None','20 mg daily','40 mg daily','80 mg daily'],max:3}
+};
+const DOCS=[
+  {skin:'#f1c7a5',hair:'#6b3f22',style:'pony',coat:'#ffffff',scrub:'#3fb3a6'},
+  {skin:'#8d5a3b',hair:'#1c1412',style:'short',coat:'#ffffff',scrub:'#5b7bd6'},
+  {skin:'#d9a37c',hair:'#262626',style:'curly',coat:'#ffffff',scrub:'#d66b8f'}
+];
+const ATTENDING={skin:'#c9a184',hair:'#d6d6d6',style:'short',glasses:true,beard:'#d6d6d6'};
+const CASES=[
+ {id:'delgado',name:'Mr. Delgado',age:58,sex:'M',lvl:1,title:'The new diagnosis',
+  look:{skin:'#c68b59',hair:'#2b2118',style:'short',mustache:'#2b2118',gown:'#9cc7ef'},
+  hx:'Nonischemic cardiomyopathy, EF 25%. First HF admission 3 weeks ago. Home meds: lisinopril, furosemide.',
+  blurb:'Fresh HFrEF on an ACE inhibitor. Build all four pillars fast, and switch to ARNI the right way.',
+  intro:'They told me my heart is weak. I’m only 58, doc. I’ve got a lot left to do.',
+  ef:25,dry:84,seed:11,
+  start:{sbp:132,dbp:80,hr:92,k:4.2,egfr:72,cong:1,raasDrug:'ACEi',raas:2,bb:0,mra:0,sglt:0,loop:2},
+  events:{2:{cong:1.2,sbp:6,say:'I’ll be honest. I ate holiday leftovers all week, ham and everything.'},
+          4:{say:'Do I really need all these pills? I’m walking my dog again, though!'}},
+  teach:['Switch ACEi to ARNI only after a 36-hour washout to avoid angioedema.','SGLT2i and MRA barely move blood pressure. Start them early.','When congestion returns, raise the diuretic and keep the beta-blocker dose steady instead of stopping it.','Aim for all four pillars within weeks, not months.']},
+ {id:'okafor',name:'Ms. Okafor',age:71,sex:'F',lvl:2,title:'Kidneys and potassium',
+  look:{skin:'#7a4b2a',hair:'#4a4040',style:'bun',glasses:true,earrings:true,gown:'#f3b4c8'},
+  hx:'Ischemic cardiomyopathy, EF 30%. Type 2 diabetes, CKD stage 3b. On low-dose sacubitril/valsartan and carvedilol.',
+  blurb:'CKD 3b with a high-normal potassium. Every step forward moves her labs.',
+  intro:'My kidney doctor keeps telling me to watch my potassium. So, go easy on me.',
+  ef:30,dry:68,seed:29,
+  start:{sbp:118,dbp:70,hr:78,k:4.9,egfr:38,cong:0.5,raasDrug:'ARNI',raas:1,bb:2,mra:0,sglt:0,loop:2},
+  events:{2:{k:0.5,say:'I switched to a salt substitute to cut my sodium. That’s good, right?'},
+          4:{egfr:-3,say:'I had a stomach bug for two days last week. I’m eating and drinking fine now.'}},
+  teach:['eGFR 30–45 is not a reason to withhold GDMT. SGLT2i protects the kidney.','Stagger MRA start and ARNI up-titration when K is high-normal and eGFR is low.','Ask about potassium-based salt substitutes when K jumps.','An eGFR dip under 30% after starting ARNI or SGLT2i is expected. Keep going.']},
+ {id:'haddad',name:'Mr. Haddad',age:79,sex:'M',lvl:3,title:'The soft blood pressure',
+  look:{skin:'#e0b08a',hair:'#ececec',style:'bald',mustache:'#ececec',glasses:true,gown:'#b9e3b0'},
+  hx:'Ischemic cardiomyopathy, EF 20%. Discharged 2 weeks ago on high-dose furosemide. Lives alone.',
+  blurb:'SBP in the 90s and on almost no GDMT. Find the headroom.',
+  intro:'My pressure always runs low, doctor. The last doctor said I can’t take heart pills.',
+  ef:20,dry:72,seed:47,
+  start:{sbp:94,dbp:58,hr:76,k:4.4,egfr:52,cong:-0.8,raasDrug:null,raas:0,bb:1,mra:0,sglt:0,loop:3},
+  events:{3:{cong:0.6,say:'My daughter took me out to a restaurant Saturday. I’ve been a little winded on the stairs since.'}},
+  teach:['Low blood pressure is often over-diuresis. Reduce the loop diuretic first.','SGLT2i and MRA have little effect on BP. Start them even with SBP in the 90s.','Start ARNI at the lowest dose once SBP is consistently 100 or higher.','Change one blood-pressure-lowering drug at a time.']}
+];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const h=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function applyLvl(l,a,max){if(a==='up')return Math.min(max,l+1);if(a==='down')return Math.max(0,l-1);if(a==='stop')return 0;return l}
+function drugOf(p,slot){return slot==='raas'?DR[p.raasDrug||'ARNI']:DR[slot]}
+function gdmtIndex(p){const r=p.raas/3*25*(p.raasDrug==='ACEi'?0.75:1);return Math.round(r+p.bb/4*25+p.mra/2*25+p.sglt*25)}
+function pillarsOn(p){return (p.raas>0?1:0)+(p.bb>0?1:0)+(p.mra>0?1:0)+(p.sglt>0?1:0)}
+function list(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]}
+const roman=['','I','II','III','IV'];
+
+let S={screen:'start',learner:'',ci:0,p:null,prev:null,visit:0,actions:null,score:0,strikes:0,m:null,rng:null,events:[],t0:0,results:[],feedback:null,showRef:false,copyText:null,docLook:0,anim:false,say:null,stamp:null,docMood:'neutral'};
+try{const d=+localStorage.getItem('fp-doc');if(d>=0&&d<3)S.docLook=d}catch(e){}
+try{S.learner=localStorage.getItem('fp-learner')||''}catch(e){}
+
+function resetActions(){S.actions={raas:'keep',bb:'keep',mra:'keep',sglt:'keep',loop:'keep'}}
+function startCase(i){
+  const c=CASES[i];S.ci=i;
+  S.p={...c.start,egfrRef:c.start.egfr,sgltDip:false,raasLocked:false};
+  S.prev=null;S.visit=0;S.score=0;S.strikes=0;S.events=[];S.feedback=null;
+  S.m={good:0,caution:0,miss:0,harm:0,inertia:0,events:0,times:[],all4:pillarsOn(S.p)===4?0:null};
+  S.rng=mulberry32(c.seed);resetActions();S.t0=performance.now();S.screen='visit';S.anim=true;S.say=null;S.stamp=null;S.docMood='neutral';render();window.scrollTo(0,0);
+}
+
+/* ---------- scoring engine ---------- */
+function evaluate(p,A){
+  const it=[];const add=(t,x)=>it.push({t,x});
+  const elig=[];let prog=0;const K=p.k.toFixed(1);
+  const drop=p.egfrRef?(p.egfrRef-p.egfr)/p.egfrRef:0;
+  const isACE=p.raasDrug==='ACEi';const ra=A.raas;
+  if(!p.raasLocked){
+    if(ra==='switchNow'){prog++;add('harm','Sacubitril/valsartan started the same day as the last lisinopril dose. Without a 36-hour washout, the overlap raises the risk of angioedema.')}
+    else if(ra==='switchWash'){prog++;
+      if(p.sbp<100)add('caution',`Switching to ARNI is right, but SBP is ${p.sbp}. Wait for SBP of 100 or more, or lower the diuretic first.`);
+      else if(p.k>5.5)add('harm',`K ${K} is too high to intensify RAAS inhibition.`);
+      else add('good','Lisinopril stopped and sacubitril/valsartan started after a 36-hour washout. ARNI is preferred over ACEi in HFrEF.')}
+    else if(ra==='up'){prog++;const st=p.raas===0;
+      if(p.sbp<100)add('harm',`${st?'Starting':'Up-titrating'} RAAS inhibition with SBP ${p.sbp} risks symptomatic hypotension.`);
+      else if(p.k>5.0)add('harm',`K ${K} is above 5.0. Address potassium before ${st?'starting':'increasing'} RAAS inhibition.`);
+      else if(isACE)add('caution','Up-titrating lisinopril works, but switching to sacubitril/valsartan is the preferred step.');
+      else add('good',st?'Sacubitril/valsartan started at 24/26 mg bid.':'Sacubitril/valsartan up-titrated toward 97/103 mg bid.')}
+    else if(ra==='down'||ra==='stop'){
+      if(p.sbp<95)add('good',`Reducing RAAS inhibition for SBP ${p.sbp} with dizziness is appropriate.`);
+      else if(p.k>5.5)add('good',`Reducing RAAS inhibition for K ${K} is appropriate.`);
+      else if(drop>=0.3)add('good',`eGFR is down ${Math.round(drop*100)}% from baseline. Reducing the dose and rechecking is appropriate.`);
+      else if(drop>0.05)add('miss',`eGFR is down ${Math.round(drop*100)}% from baseline. A drop under 30% after starting therapy is expected; keep the dose.`);
+      else add('miss','RAAS inhibitor reduced without a safety trigger. This gives up mortality benefit.')}
+    else{
+      if(p.raas>0&&p.sbp<90)add('harm',`SBP ${p.sbp} on RAAS inhibition. Reduce the dose.`);
+      else if(p.raas>0&&p.k>5.5)add('harm',`K ${K} on RAAS inhibition. Reduce the dose and recheck.`);
+      else if(p.sbp>=100&&p.k<=5.0&&(isACE||p.raas<3))elig.push(isACE?'the ARNI switch':'ARNI');
+    }
+  }
+  const b=A.bb;
+  if(b==='up'){prog++;const st=p.bb===0;
+    if(p.cong>=1.5)add('harm',`The patient is congested. Decongest before ${st?'starting':'up-titrating'} a beta-blocker.`);
+    else if(p.hr<55||p.sbp<90)add('harm',`HR ${p.hr} and SBP ${p.sbp} are too low to ${st?'start':'up-titrate'} carvedilol.`);
+    else if(p.hr<60)add('caution',`HR ${p.hr}. Up-titration is possible, but watch for bradycardia.`);
+    else add('good',st?'Carvedilol started at 3.125 mg bid.':'Carvedilol up-titrated.')}
+  else if(b==='down'||b==='stop'){
+    if(p.hr<55||p.sbp<90)add('good','Reducing carvedilol for bradycardia or hypotension is appropriate.');
+    else if(p.cong>=2.2&&b==='down')add('good','A dose reduction (not a stop) is reasonable in marked congestion.');
+    else add('miss','Beta-blocker reduced without a safety trigger. Withdrawal raises the risk of events.')}
+  else{
+    if(p.bb>0&&p.hr<50)add('harm',`HR ${p.hr} on carvedilol. Reduce the dose.`);
+    else if(p.bb>0&&p.cong>=1.5)add('good','Keeping the beta-blocker dose steady (not stopping it) while you decongest is correct.');
+    else if(p.cong<1.5&&p.hr>=60&&p.sbp>=95&&p.bb<4)elig.push('the beta-blocker');
+  }
+  const m=A.mra;
+  if(m==='up'){prog++;const st=p.mra===0;
+    if(p.k>5.0||p.egfr<30)add('harm',`Spironolactone with K ${K} and eGFR ${p.egfr} risks dangerous hyperkalemia.`);
+    else add('good',st?'Spironolactone 12.5 mg started. Check K and creatinine within 1 week.':'Spironolactone up-titrated to 25 mg.')}
+  else if(m==='down'||m==='stop'){
+    if(p.k>5.5)add('good',`Holding spironolactone for K ${K} is correct.`);
+    else if(p.k>5.0)add('good',`Lowering spironolactone for K ${K} is prudent.`);
+    else if(p.egfr<30)add('good','Reducing the MRA for eGFR under 30 is appropriate.');
+    else add('miss','MRA reduced with normal potassium and kidney function.')}
+  else{
+    if(p.mra>0&&p.k>5.5)add('harm',`K ${K} on spironolactone. Hold it.`);
+    else if(p.mra>0&&p.k>5.0)add('caution',`K ${K} on spironolactone. Halve the dose or recheck within 72 hours.`);
+    else if(p.k<=5.0&&p.egfr>=30&&p.mra<2)elig.push('the MRA');
+  }
+  const g=A.sglt;
+  if(g==='up'){prog++;
+    if(p.egfr<25)add('harm',`eGFR ${p.egfr}: do not start dapagliflozin below 25.`);
+    else add('good','Dapagliflozin 10 mg started. No titration needed; expect a small eGFR dip.')}
+  else if(g==='stop'||g==='down'){
+    if(p.egfr<20)add('good','Stopping dapagliflozin at eGFR under 20 is reasonable.');
+    else add('miss','Dapagliflozin stopped. Its early eGFR dip is hemodynamic and expected; long term it protects the kidney.')}
+  else if(p.sglt===0&&p.egfr>=25)elig.push('the SGLT2 inhibitor');
+  const L=A.loop;
+  if(p.cong>=1.5){
+    if(L==='up')add('good','Furosemide increased for congestion. Decongest first.');
+    else if(L==='keep')add('miss','The patient is congested. Increase the loop diuretic.');
+    else add('harm','Lowering the diuretic in a congested patient invites a hospitalization.')}
+  else if(p.cong<-0.3){
+    if(L==='down'||L==='stop')add('good','The patient is dry. Lowering furosemide restores blood-pressure room for GDMT.');
+    else if(L==='up')add('harm','The patient is already volume-depleted. More diuretic causes hypotension and kidney injury.');
+    else if(p.loop>0)add('miss','The patient is dry and orthostatic. Reduce furosemide.')}
+  else if(L==='up')add('caution','The patient is euvolemic. Extra diuretic is not needed.');
+  const bpUps=(!p.raasLocked&&(ra==='up'||ra==='switchWash'||ra==='switchNow')?1:0)+(b==='up'?1:0)+(L==='up'?1:0);
+  if(bpUps>=2&&p.sbp<110)add('caution',`Two blood-pressure-lowering changes at once with SBP ${p.sbp}. Stagger them.`);
+  if(m==='up'&&ra==='up'&&p.egfr<45&&p.k>=4.5)add('caution',`MRA start and ARNI up-titration on the same day, with eGFR ${p.egfr} and K ${K}. Stagger them and check K in 1 week.`);
+  let inertia=false;
+  if(prog===0&&elig.length){inertia=true;add('miss',`Clinical inertia: ${list(elig)} could be started or up-titrated today, and nothing changed.`)}
+  if(!it.length)add('good','No safe up-titration is available today. Holding steady is correct.');
+  return {items:it,inertia};
+}
+
+/* ---------- physiology ---------- */
+function advance(p,A,rng){
+  const n={...p};const N=r=>(rng()*2-1)*r;
+  let dR=0,sw=false;
+  if(!p.raasLocked&&(A.raas==='switchWash'||A.raas==='switchNow')){sw=true;n.raasDrug='ARNI';n.raas=p.raas>=2?2:1}
+  else if(!p.raasLocked){const nl=applyLvl(p.raas,A.raas,3);dR=nl-p.raas;n.raas=nl;if(nl===0)n.raasDrug=null;else if(p.raas===0)n.raasDrug='ARNI'}
+  const nb=applyLvl(p.bb,A.bb,4),dB=nb-p.bb;n.bb=nb;
+  const nm=applyLvl(p.mra,A.mra,2),dM=nm-p.mra;n.mra=nm;
+  const ns=applyLvl(p.sglt,A.sglt,1),dS=ns-p.sglt;n.sglt=ns;
+  const nL=applyLvl(p.loop,A.loop,3),dL=nL-p.loop;n.loop=nL;
+  if((p.raas===0&&n.raas>0)||sw||(p.sglt===0&&ns>0))n.egfrRef=p.egfr;
+  let dc=0;
+  if(dL>0)dc-=0.8*dL*(p.cong>0?1:0.6);
+  if(dL<0)dc+=0.45*(-dL);
+  if(dB>0&&p.cong>=1.5)dc+=0.6;
+  if(dS>0&&p.cong>0)dc-=0.35;
+  if(gdmtIndex(n)>=50&&p.cong>0)dc-=0.15;
+  n.cong=clamp(p.cong+dc,-1.2,3);
+  const vc=n.cong-p.cong;
+  const ds=-6*Math.max(0,dR)+4*Math.max(0,-dR)-(sw?7:0)-3*dB-3*Math.max(0,dS)-(p.cong>0?1.5:5)*dL+4*vc+N(3);
+  n.sbp=Math.round(clamp(p.sbp+ds,70,170));
+  n.dbp=Math.round(clamp(n.sbp*0.6+N(3),40,100));
+  n.hr=Math.round(clamp(p.hr-7*dB+3*vc+N(2.5),38,125));
+  const km=p.egfr<45?1.4:1;
+  n.k=clamp(p.k+km*(0.15*dR+(sw?0.12:0)+0.35*dM)-0.12*dL-(dS>0?0.05:0)+N(0.08),3.2,7);
+  let de=0;
+  if(dR>0)de-=3*dR;
+  if(sw)de-=2;
+  if(dS>0){de-=4;n.sgltDip=true}else if(p.sgltDip){de+=2;n.sgltDip=false}
+  if(dL>0&&p.cong<=0.3)de-=5*dL;
+  if(dL<0&&p.cong<0)de+=4*(-dL);
+  if(p.cong>=1.5&&n.cong<1.5)de+=3;
+  n.egfr=Math.round(clamp(p.egfr+de+N(1.5),8,110));
+  n.k=Math.round(n.k*10)/10;
+  return n;
+}
+
+/* ---------- flow ---------- */
+function sign(){
+  const secs=(performance.now()-S.t0)/1000;S.m.times.push(secs);
+  const r=evaluate(S.p,S.actions);
+  let pts=0,str=0;
+  r.items.forEach(i=>{pts+=PTS[i.t];S.m[i.t]++;if(i.t==='harm')str++});
+  if(r.inertia)S.m.inertia++;
+  S.score+=pts;S.strikes+=str;
+  S.docMood=str?'worried':pts>=100?'happy':'neutral';
+  S.feedback={items:r.items,pts,str};render();
+  setTimeout(()=>document.getElementById('next-btn')?.focus({preventScroll:true}),60);
+}
+function nextVisit(){
+  const c=CASES[S.ci];
+  const n=advance(S.p,S.actions,S.rng);
+  const ev=[];let say=null,stamp=null;
+  if(S.actions.raas==='switchNow'){ev.push({text:'The day after the switch: lip and tongue swelling. ED visit for angioedema. Sacubitril/valsartan and ACE inhibitors are now off the table.',strike:false});stamp='ANGIOEDEMA';n.raas=0;n.raasDrug=null;n.raasLocked=true}
+  S.visit++;
+  if(S.strikes<3&&S.visit<VISITS){
+    const e=c.events[S.visit];
+    if(e){['cong','sbp','k','egfr','hr'].forEach(k=>{if(e[k])n[k]+=e[k]});say=e.say}
+  }
+  const strike=(t,s)=>{ev.push({text:t,strike:true});stamp=s;S.strikes++;S.m.events++};
+  if(n.k>=6.0){strike(`Strike! ED visit for K ${n.k.toFixed(1)} with peaked T waves. Spironolactone stopped.`,'ED VISIT');n.mra=0;n.k=5.3}
+  if(n.sbp<85){strike(`Strike! Fainted at home. SBP ${n.sbp} in the ED, given IV fluids.`,'SYNCOPE');n.sbp=97;n.cong=Math.max(n.cong,-0.3)}
+  if(n.cong>=2.6){strike('Strike! Admitted with decompensated heart failure. Discharged on more furosemide.','ADMITTED');n.cong=0.8;n.loop=Math.min(3,n.loop+1)}
+  if(n.hr<46){strike(`Strike! Symptomatic bradycardia, HR ${n.hr}. The ED cut the carvedilol dose.`,'ED VISIT');n.bb=Math.max(0,n.bb-1);n.hr=60}
+  n.k=Math.round(n.k*10)/10;
+  if(S.m.all4===null&&pillarsOn(n)===4)S.m.all4=S.visit*2;
+  S.prev=S.p;S.p=n;S.events=ev;S.say=say;S.stamp=stamp;S.feedback=null;S.docMood='neutral';
+  if(S.strikes>=3||S.visit>=VISITS){endCase();return}
+  resetActions();S.t0=performance.now();S.anim=true;render();window.scrollTo(0,0);
+}
+function endCase(){
+  const c=CASES[S.ci],p=S.p,idx=gdmtIndex(p),on=pillarsOn(p);
+  const failed=S.strikes>=3;
+  const bonus=failed?0:idx*5+(on===4?200:0);
+  const stars=failed?0:(idx>=75&&S.strikes===0?3:idx>=50&&S.strikes<=1?2:1);
+  const avg=S.m.times.reduce((a,b)=>a+b,0)/Math.max(1,S.m.times.length);
+  const res={id:c.id,name:c.name,idx,on,strikes:S.strikes,misses:S.m.miss,inertia:S.m.inertia,cautions:S.m.caution,goods:S.m.good,harms:S.m.harm,events:S.m.events,avg,score:S.score+bonus,bonus,raw:S.score,stars,failed,all4:S.m.all4,visits:S.visit,efProj:c.ef+Math.round(idx*0.13),p:{...p}};
+  S.results=S.results.filter(r=>r.id!==c.id);S.results.push(res);S.last=res;
+  S.screen='debrief';render();window.scrollTo(0,0);
+}
+
+/* ---------- art ---------- */
+const O='#2a2438';
+function head(hx,hy,r,L,mood){
+  let s='';
+  if(L.style==='pony')s+=`<ellipse cx="${hx+r*0.95}" cy="${hy+8}" rx="11" ry="24" fill="${L.hair}" stroke="${O}" stroke-width="3"/>`;
+  if(L.style==='bun')s+=`<circle cx="${hx}" cy="${hy-r-8}" r="15" fill="${L.hair}" stroke="${O}" stroke-width="3"/>`;
+  s+=`<circle cx="${hx-r+1}" cy="${hy+3}" r="7" fill="${L.skin}" stroke="${O}" stroke-width="3"/><circle cx="${hx+r-1}" cy="${hy+3}" r="7" fill="${L.skin}" stroke="${O}" stroke-width="3"/>`;
+  if(L.earrings)s+=`<circle cx="${hx-r+1}" cy="${hy+13}" r="3.5" fill="#ffc94a" stroke="${O}" stroke-width="1.5"/><circle cx="${hx+r-1}" cy="${hy+13}" r="3.5" fill="#ffc94a" stroke="${O}" stroke-width="1.5"/>`;
+  s+=`<circle cx="${hx}" cy="${hy}" r="${r}" fill="${L.skin}" stroke="${O}" stroke-width="3"/>`;
+  if(L.beard)s+=`<path d="M${hx-r+3} ${hy+4} Q${hx-r+6} ${hy+r+12} ${hx} ${hy+r+8} Q${hx+r-6} ${hy+r+12} ${hx+r-3} ${hy+4} Q${hx} ${hy+r-2} ${hx-r+3} ${hy+4}Z" fill="${L.beard}" stroke="${O}" stroke-width="3"/>`;
+  if(L.style==='short'||L.style==='pony'||L.style==='bun')s+=`<path d="M${hx-r-1} ${hy-1} Q${hx-r-2} ${hy-r-10} ${hx} ${hy-r-8} Q${hx+r+2} ${hy-r-10} ${hx+r+1} ${hy-1} Q${hx+r-6} ${hy-r+12} ${hx+4} ${hy-r+12} Q${hx-12} ${hy-r+16} ${hx-r-1} ${hy-1}Z" fill="${L.hair}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+  if(L.style==='curly'){for(let a=180;a<=360;a+=22){const t=a*Math.PI/180;s+=`<circle cx="${(hx+(r-2)*Math.cos(t)).toFixed(1)}" cy="${(hy-4+(r-2)*Math.sin(t)).toFixed(1)}" r="12" fill="${L.hair}" stroke="${O}" stroke-width="3"/>`}
+    s+=`<circle cx="${hx}" cy="${hy-r+6}" r="13" fill="${L.hair}"/>`}
+  if(L.style==='bald')s+=`<ellipse cx="${hx-r+5}" cy="${hy-6}" rx="8" ry="15" fill="${L.hair}" stroke="${O}" stroke-width="3"/><ellipse cx="${hx+r-5}" cy="${hy-6}" rx="8" ry="15" fill="${L.hair}" stroke="${O}" stroke-width="3"/><path d="M${hx-14} ${hy-r+9} q6 -4 12 0" stroke="#fff" stroke-opacity=".6" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const l=hx-12,rr=hx+12,ey=hy-1,my=hy+16;
+  const dot=(x)=>`<circle cx="${x}" cy="${ey}" r="3.8" fill="${O}"/>`;
+  const st=`stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"`;
+  let eyes='',mouth='',brows='';
+  switch(mood){
+    case 'happy':eyes=`<path d="M${l-5} ${ey+1} Q${l} ${ey-6} ${l+5} ${ey+1}" ${st}/><path d="M${rr-5} ${ey+1} Q${rr} ${ey-6} ${rr+5} ${ey+1}" ${st}/>`;
+      mouth=`<path d="M${hx-11} ${my-1} Q${hx} ${my+14} ${hx+11} ${my-1}Z" fill="#8a2f3f" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+      eyes+=`<circle cx="${hx-21}" cy="${hy+10}" r="6" fill="#ff8fa3" opacity=".55"/><circle cx="${hx+21}" cy="${hy+10}" r="6" fill="#ff8fa3" opacity=".55"/>`;break;
+    case 'sad':eyes=dot(l)+dot(rr);brows=`<path d="M${l-7} ${ey-8} L${l+5} ${ey-12}" ${st}/><path d="M${rr-5} ${ey-12} L${rr+7} ${ey-8}" ${st}/>`;mouth=`<path d="M${hx-9} ${my+6} Q${hx} ${my-3} ${hx+9} ${my+6}" ${st}/>`;break;
+    case 'worried':eyes=dot(l)+dot(rr);brows=`<path d="M${l-6} ${ey-10} Q${l} ${ey-15} ${l+6} ${ey-11}" ${st}/><path d="M${rr-6} ${ey-11} Q${rr} ${ey-15} ${rr+6} ${ey-10}" ${st}/>`;mouth=`<path d="M${hx-9} ${my+3} q4.5 -5 9 0 q4.5 5 9 0" ${st}/>`;break;
+    case 'dizzy':eyes=`<path d="M${l-4} ${ey-4} l8 8 M${l+4} ${ey-4} l-8 8 M${rr-4} ${ey-4} l8 8 M${rr+4} ${ey-4} l-8 8" ${st}/>`;mouth=`<path d="M${hx-9} ${my+3} q4.5 -5 9 0 q4.5 5 9 0" ${st}/>`;break;
+    case 'tired':eyes=`<path d="M${l-5} ${ey} L${l+5} ${ey} M${rr-5} ${ey} L${rr+5} ${ey}" ${st}/>`;mouth=`<ellipse cx="${hx}" cy="${my+3}" rx="4" ry="5" fill="${O}"/>`;break;
+    default:eyes=dot(l)+dot(rr);brows=`<path d="M${l-6} ${ey-10} L${l+5} ${ey-10}" ${st}/><path d="M${rr-5} ${ey-10} L${rr+6} ${ey-10}" ${st}/>`;mouth=`<path d="M${hx-8} ${my+3} Q${hx} ${my+7} ${hx+8} ${my+3}" ${st}/>`;
+  }
+  s+=eyes+brows;
+  s+=`<path d="M${hx-1} ${hy+2} q4 6 -2 8" ${st} stroke-width="2.5"/>`;
+  if(L.mustache)s+=`<path d="M${hx-13} ${hy+13} Q${hx} ${hy+5} ${hx+13} ${hy+13} Q${hx} ${hy+16} ${hx-13} ${hy+13}Z" fill="${L.mustache}" stroke="${O}" stroke-width="2.5"/>`;
+  s+=mouth;
+  if(L.glasses)s+=`<g stroke="${O}" stroke-width="2.5" fill="rgba(255,255,255,.25)"><circle cx="${l}" cy="${ey}" r="9.5"/><circle cx="${rr}" cy="${ey}" r="9.5"/><path d="M${l+9.5} ${ey} L${rr-9.5} ${ey}"/></g>`;
+  return s;
+}
+function patientSVG(c,p,mood,anim){
+  const L=c.look,cx=520,ed=p.cong>=0.6?Math.min(1,(p.cong-0.4)/1.6):0;
+  let s=`<g id="pt" class="${anim?'walk':''}"><g class="bob">`;
+  [503,537].forEach(x=>{
+    s+=`<rect x="${x-9}" y="284" width="18" height="48" rx="7" fill="${L.skin}" stroke="${O}" stroke-width="3"/>`;
+    s+=`<ellipse cx="${x}" cy="330" rx="${10+ed*7}" ry="${7+ed*3}" fill="${L.skin}" stroke="${O}" stroke-width="3"/>`;
+    if(ed>0)s+=`<ellipse cx="${x}" cy="330" rx="${8+ed*6}" ry="${5+ed*2}" fill="#ff6b6b" opacity="${0.15+ed*0.3}"/>`;
+    s+=`<ellipse cx="${x+(x<520?-4:4)}" cy="342" rx="15" ry="7" fill="#5d6b8a" stroke="${O}" stroke-width="3"/>`;
+  });
+  s+=`<rect x="456" y="206" width="22" height="74" rx="11" fill="${L.gown}" stroke="${O}" stroke-width="3" transform="rotate(10 467 210)"/>`;
+  s+=`<rect x="562" y="206" width="22" height="74" rx="11" fill="${L.gown}" stroke="${O}" stroke-width="3" transform="rotate(-10 573 210)"/>`;
+  s+=`<rect x="510" y="184" width="20" height="22" fill="${L.skin}" stroke="${O}" stroke-width="3"/>`;
+  s+=`<path d="M478 204 Q520 194 562 204 L578 292 Q520 302 462 292Z" fill="${L.gown}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+  [[490,226],[530,218],[552,248],[500,262],[540,280],[476,284],[516,244]].forEach(([x,y])=>s+=`<circle cx="${x}" cy="${y}" r="3" fill="#fff" opacity=".7"/>`);
+  s+=`<path d="M506 198 L520 214 L534 198" stroke="${O}" stroke-width="2.5" fill="none"/>`;
+  s+=`<circle cx="450" cy="284" r="10" fill="${L.skin}" stroke="${O}" stroke-width="3"/><circle cx="590" cy="284" r="10" fill="${L.skin}" stroke="${O}" stroke-width="3"/>`;
+  s+=head(cx,154,36,L,mood);
+  if(p.cong>=1.5)s+=`<g class="breath" stroke="${O}" stroke-width="3" fill="none" stroke-linecap="round"><path d="M566 170 q8 -4 14 0"/><path d="M570 180 q10 -4 18 0"/><path d="M566 190 q8 -4 14 0"/></g>`;
+  if(p.cong>=2||mood==='worried')s+=`<path d="M488 128 q-5 8 0 11 q5 -3 0 -11Z" fill="#7cc8ff" stroke="${O}" stroke-width="2"/>`;
+  if(mood==='dizzy')s+=`<g class="spin" style="transform-origin:520px 108px">${[0,120,240].map(a=>{const t=a*Math.PI/180;return `<path transform="translate(${(520+40*Math.cos(t)).toFixed(1)} ${(108+12*Math.sin(t)).toFixed(1)})" d="M0 -8 L2.5 -2.5 L8 0 L2.5 2.5 L0 8 L-2.5 2.5 L-8 0 L-2.5 -2.5Z" fill="#ffc94a" stroke="${O}" stroke-width="1.5"/>`}).join('')}</g>`;
+  if(mood==='tired')s+=`<text x="566" y="124" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="${O}">z</text><text x="582" y="106" font-family="Fredoka, sans-serif" font-weight="700" font-size="16" fill="${O}">z</text>`;
+  if(mood==='happy')s+=`<path d="M578 118 l3 -8 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3Z" fill="#ffc94a" stroke="${O}" stroke-width="1.5"/>`;
+  return s+'</g></g>';
+}
+function doctorSVG(D,mood){
+  let s=`<g id="doc">`;
+  s+=`<ellipse cx="240" cy="408" rx="62" ry="9" fill="#000" opacity=".12"/>`;
+  s+=`<rect x="219" y="318" width="18" height="84" rx="6" fill="${D.scrub}" stroke="${O}" stroke-width="3"/><rect x="243" y="318" width="18" height="84" rx="6" fill="${D.scrub}" stroke="${O}" stroke-width="3"/>`;
+  s+=`<ellipse cx="224" cy="404" rx="15" ry="7" fill="#3b3f58" stroke="${O}" stroke-width="3"/><ellipse cx="258" cy="404" rx="15" ry="7" fill="#3b3f58" stroke="${O}" stroke-width="3"/>`;
+  s+=`<rect x="181" y="200" width="22" height="98" rx="11" fill="${D.coat}" stroke="${O}" stroke-width="3" transform="rotate(7 192 204)"/>`;
+  s+=`<rect x="230" y="170" width="20" height="24" fill="${D.skin}" stroke="${O}" stroke-width="3"/>`;
+  s+=`<path d="M198 196 Q240 184 282 196 L294 338 L186 338Z" fill="${D.coat}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`;
+  s+=`<path d="M228 190 L240 228 L252 190Z" fill="${D.scrub}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  s+=`<path d="M226 190 L238 260 M254 190 L242 260" stroke="${O}" stroke-width="2.5" fill="none"/>`;
+  s+=`<rect x="200" y="286" width="26" height="22" rx="3" fill="none" stroke="${O}" stroke-width="2.5"/><rect x="206" y="278" width="4" height="14" fill="#3d8ef0"/>`;
+  s+=`<rect x="258" y="208" width="22" height="14" rx="2" fill="#ffc94a" stroke="${O}" stroke-width="2"/>`;
+  s+=`<path d="M222 196 Q210 248 232 262" stroke="#4a5568" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle cx="234" cy="266" r="7" fill="#c9d1dc" stroke="${O}" stroke-width="2.5"/><path d="M256 194 Q262 214 252 222" stroke="#4a5568" stroke-width="4.5" fill="none" stroke-linecap="round"/>`;
+  s+=`<rect x="276" y="200" width="22" height="64" rx="11" fill="${D.coat}" stroke="${O}" stroke-width="3" transform="rotate(-12 287 204)"/>`;
+  s+=`<g transform="rotate(8 292 270)"><rect x="268" y="236" width="52" height="68" rx="5" fill="#c08a50" stroke="${O}" stroke-width="3"/><rect x="274" y="246" width="40" height="52" fill="#fff"/><rect x="284" y="231" width="20" height="10" rx="2" fill="#9aa3b0" stroke="${O}" stroke-width="2"/><path d="M279 256 h28 M279 265 h28 M279 274 h20 M279 283 h24" stroke="#9aa3b0" stroke-width="2.5"/></g>`;
+  s+=`<circle cx="282" cy="272" r="10" fill="${D.skin}" stroke="${O}" stroke-width="3"/>`;
+  s+=head(240,140,34,D,mood);
+  return s+'</g>';
+}
+function roomSVG(o){
+  const hr=o.p?o.p.hr:72;
+  let ecgPts='';for(let x=0;x<=280;x+=40){ecgPts+=`${x},92 ${x+10},92 ${x+13},88 ${x+16},92 ${x+19},95 ${x+22},66 ${x+25},112 ${x+28},92 ${x+33},92 ${x+37},86 ${x+40},92 `}
+  let s=`<svg class="room" viewBox="0 0 1000 460" role="img" aria-label="Exam room${o.c?' with '+o.c.name+' on the exam table':''}" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ec8f2"/><stop offset="1" stop-color="#cdeefe"/></linearGradient>
+  <clipPath id="scr"><rect x="312" y="60" width="166" height="72"/></clipPath>
+  <pattern id="tile" width="60" height="30" patternUnits="userSpaceOnUse"><rect width="60" height="30" fill="#e2b77f"/><path d="M0 29.5 H60 M30 0 V30" stroke="#c99a60" stroke-width="2"/></pattern></defs>
+  <rect width="1000" height="330" fill="#cfe9e4"/>
+  <rect y="236" width="1000" height="94" fill="#b6ddd5"/><rect y="232" width="1000" height="6" fill="#9ccbc1"/>
+  <rect y="330" width="1000" height="130" fill="url(#tile)"/><rect y="322" width="1000" height="10" fill="#8fb9b0" stroke="${O}" stroke-width="2"/>
+  <g><rect x="58" y="48" width="176" height="156" rx="8" fill="#fff" stroke="${O}" stroke-width="4"/><rect x="70" y="60" width="152" height="132" fill="url(#sky)"/>
+   <g fill="#fff"><circle cx="110" cy="100" r="14"/><circle cx="128" cy="94" r="18"/><circle cx="148" cy="102" r="13"/></g>
+   <path d="M70 160 Q120 130 170 160 T222 150 V192 H70Z" fill="#8fd18a"/>
+   <path d="M146 60 V192 M70 126 H222" stroke="#fff" stroke-width="6"/><rect x="58" y="200" width="176" height="12" rx="4" fill="#fff" stroke="${O}" stroke-width="3"/></g>
+  <rect x="384" y="164" width="22" height="20" fill="#7d8597" stroke="${O}" stroke-width="3"/>
+  <g><rect x="300" y="48" width="190" height="120" rx="10" fill="#2b3245" stroke="${O}" stroke-width="4"/><rect x="312" y="60" width="166" height="96" rx="4" fill="#06120e"/>
+   <g clip-path="url(#scr)"><polyline class="ecg" style="animation-duration:${(120/hr).toFixed(2)}s" points="${ecgPts.trim()}" transform="translate(312 0)" fill="none" stroke="#5fe39a" stroke-width="2.5" stroke-linejoin="round"/></g>
+   <text x="318" y="150" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#5fe39a">HR ${o.p?o.p.hr:'--'}</text>
+   <text x="400" y="150" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#ff8a7a">${o.p?o.p.sbp+'/'+o.p.dbp:'---/--'}</text>
+   <circle cx="476" cy="66" r="4" fill="#ff6b6b" class="breath"/></g>
+  <g><rect x="560" y="64" width="92" height="68" rx="4" fill="#c08a50" stroke="${O}" stroke-width="3"/><rect x="568" y="72" width="76" height="52" fill="#fffaf0"/><path d="M580 88 h52 M584 100 h44 M590 112 h32" stroke="#c9b48c" stroke-width="3"/><circle cx="626" cy="114" r="6" fill="#e5484d"/></g>
+  <g><circle cx="724" cy="96" r="32" fill="#fff" stroke="${O}" stroke-width="4"/><path d="M724 96 V74 M724 96 L740 104" stroke="${O}" stroke-width="4" stroke-linecap="round"/></g>
+  <g><rect x="852" y="96" width="112" height="232" rx="4" fill="#9a6b45" stroke="${O}" stroke-width="4"/><rect x="876" y="116" width="64" height="54" rx="3" fill="#cdeefe" stroke="${O}" stroke-width="3"/><circle cx="944" cy="218" r="7" fill="#ffc94a" stroke="${O}" stroke-width="3"/>
+   <rect x="878" y="64" width="60" height="24" rx="4" fill="#fff" stroke="${O}" stroke-width="3"/><text x="908" y="81" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="13" fill="${O}">HF CLINIC</text></g>
+  <g><rect x="700" y="226" width="124" height="104" rx="6" fill="#fff8ec" stroke="${O}" stroke-width="3"/><path d="M762 226 V330" stroke="${O}" stroke-width="3"/><circle cx="752" cy="276" r="4" fill="${O}"/><circle cx="772" cy="276" r="4" fill="${O}"/>
+   <rect x="716" y="200" width="20" height="28" rx="4" fill="#38b6d8" stroke="${O}" stroke-width="3"/><rect x="722" y="192" width="8" height="10" fill="#fff" stroke="${O}" stroke-width="2"/>
+   <rect x="780" y="208" width="34" height="20" rx="3" fill="#ffc94a" stroke="${O}" stroke-width="3"/></g>
+  <g><path d="M18 330 L26 282 H70 L78 330Z" fill="#e07a5f" stroke="${O}" stroke-width="3"/><path d="M48 284 Q20 240 30 210 Q44 240 48 284 Q50 230 72 214 Q70 250 48 284 Q60 250 90 250 Q74 270 48 284" fill="#5cb85c" stroke="${O}" stroke-width="3"/></g>
+  <g><rect x="414" y="290" width="212" height="44" rx="6" fill="#dfe5ec" stroke="${O}" stroke-width="3"/><rect x="430" y="300" width="80" height="24" rx="4" fill="#c9d1dc" stroke="${O}" stroke-width="2"/><rect x="530" y="300" width="80" height="24" rx="4" fill="#c9d1dc" stroke="${O}" stroke-width="2"/>
+   <rect x="392" y="266" width="256" height="28" rx="12" fill="#6b8fb5" stroke="${O}" stroke-width="3"/><rect x="430" y="264" width="180" height="8" rx="3" fill="#fff" opacity=".9"/>
+   <rect x="640" y="344" width="60" height="20" rx="4" fill="#9aa3b0" stroke="${O}" stroke-width="3"/><path d="M648 364 V392 M692 364 V392" stroke="${O}" stroke-width="4"/>
+   <path d="M424 334 V392 M616 334 V392" stroke="${O}" stroke-width="5"/></g>`;
+  if(o.c&&o.p)s+=patientSVG(o.c,o.p,o.ptMood,o.anim);
+  s+=doctorSVG(o.doc,o.docMood);
+  if(o.stamp)s+=`<g transform="rotate(-9 830 400)"><rect x="720" y="372" width="220" height="56" rx="10" fill="#fff" fill-opacity=".85" stroke="#e5484d" stroke-width="6"/><text x="830" y="412" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="30" fill="#e5484d" letter-spacing="2">${o.stamp}</text></g>`;
+  return s+'</svg>';
+}
+function portrait(L,mood,shirt){
+  return `<svg viewBox="0 0 120 120" aria-hidden="true"><path d="M14 124 Q16 92 60 90 Q104 92 106 124Z" fill="${shirt||L.gown||'#fff'}" stroke="${O}" stroke-width="3"/>${head(60,58,32,L,mood)}</svg>`;
+}
+
+/* ---------- views ---------- */
+function heartIcon(on){return `<svg viewBox="0 0 24 24"><path d="M12 21 C5 15 2 12 2 8 A5 5 0 0 1 12 5 A5 5 0 0 1 22 8 C22 12 19 15 12 21Z" fill="${on?'#e5484d':'#39437a'}" stroke="${O}" stroke-width="2"/></svg>`}
+function hudHTML(){
+  const c=CASES[S.ci],idx=gdmtIndex(S.p);
+  return `<div class="hud"><button class="homebtn" data-act="home" aria-label="Back to the case list"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 11 L12 3 L21 11 V21 H15 V14 H9 V21 H3Z" fill="${O}"/></svg></button>
+   <div class="chip"><span class="k">Patient</span>${c.name}</div>
+   <div class="chip"><span class="k">Week ${S.visit*2}</span><div class="dots">${Array.from({length:VISITS},(_,i)=>`<i class="${i<S.visit?'on':i===S.visit?'now':''}"></i>`).join('')}</div></div>
+   <div class="grow"></div>
+   <div class="chip"><span class="k">Pillar power</span><div class="pmeter"><span style="width:${idx}%"></span></div><b>${idx}</b></div>
+   <div class="chip"><span class="k">Score</span><b>${S.score}</b></div>
+   <div class="chip" aria-label="${3-S.strikes} lives left"><div class="hearts">${[0,1,2].map(i=>heartIcon(i<3-S.strikes)).join('')}</div></div></div>`;
+}
+function symptoms(p){
+  const s=[];
+  if(p.cong>=2)s.push('I get short of breath walking to the mailbox, and I sleep on three pillows.');
+  else if(p.cong>=1.2)s.push('My ankles swell by evening, and I need an extra pillow at night.');
+  else if(p.cong<-0.4)s.push('I get lightheaded when I stand up, and I’m always thirsty.');
+  if(p.sbp<95&&p.cong>=-0.4)s.push('I feel dizzy when I get up quickly.');
+  if(p.hr<55)s.push('I’ve been more tired than usual.');
+  if(!s.length)s.push(gdmtIndex(p)>=60?'I feel better than I have in months. I’m walking 20 minutes a day!':'I feel okay, but one flight of stairs still winds me.');
+  return s.join(' ');
+}
+function exam(p){
+  if(p.cong>=1.5)return 'JVP 12 cm, crackles at both bases, 2+ leg edema.';
+  if(p.cong>=0.6)return 'JVP 9 cm, trace ankle edema, lungs clear.';
+  if(p.cong<-0.4)return 'JVP flat, dry mouth, BP drops 18 mmHg on standing.';
+  return 'JVP 7 cm, no edema, lungs clear.';
+}
+function nyha(p){let c=2;if(p.cong>=1.2)c=3;if(p.cong>=2.2)c=4;if(c===2&&gdmtIndex(p)>=70&&p.cong<0.6)c=1;return c}
+function ptMood(p){if(p.cong>=1.5)return 'sad';if(p.cong<-0.4||p.sbp<95)return 'dizzy';if(p.hr<55)return 'tired';if(gdmtIndex(p)>=60)return 'happy';return 'neutral'}
+function delta(cur,prev,dec){if(prev==null)return 'baseline';const d=cur-prev;if(Math.abs(d)<(dec?0.05:1))return 'no change';return `${d>0?'▲':'▼'} ${Math.abs(d).toFixed(dec?1:0)}`}
+function visitHTML(){
+  const c=CASES[S.ci],p=S.p,q=S.prev,D=DOCS[S.docLook];
+  const greet=['Hi again, doctor.','Back for my check-up!','Good to see you, doc.','Morning, doctor.','Here I am again.'][S.visit%5];
+  const ptSay=(S.visit===0?c.intro:(S.say||greet))+' '+symptoms(p);
+  const docSay=`On exam: ${exam(p)}${S.visit===0?' Let’s build your four pillars.':''}`;
+  const ticker=S.events.length?`<div class="ticker">${S.events.map(e=>`<div class="tick ${e.strike?'':'note'}">${h(e.text)}</div>`).join('')}</div>`:'';
+  const lab=(n,v,u,d,f)=>`<div class="lab"><span class="n">${n}${f?`<span class="flag ${f}">${f==='bad'?'CRITICAL':'WATCH'}</span>`:''}</span><span class="v">${v}</span><span class="u">${u}</span><span class="d">${d}</span></div>`;
+  const fk=p.k>5.5?'bad':p.k>5.0?'warn':'',fb=p.sbp<90?'bad':p.sbp<100?'warn':'',fh=p.hr<50?'bad':p.hr<60?'warn':'',fg=p.egfr<25?'bad':p.egfr<30?'warn':'';
+  const wt=c.dry+p.cong*2,wq=q?c.dry+q.cong*2:null;
+  return `${ticker}<div class="stage">${roomSVG({c,p,ptMood:ptMood(p),anim:S.anim,doc:D,docMood:S.docMood,stamp:S.stamp})}
+    <div class="bubbles"><div class="bubble pt"><span class="who">${c.name}</span>${h(ptSay)}</div><div class="bubble doc"><span class="who">You${S.learner?' · '+h(S.learner):''}</span>${docSay}</div></div>
+    ${S.anim?`<div class="weekcard">${S.visit===0?'New patient':'2 weeks later'}<b>Week ${S.visit*2}</b></div>`:''}</div>
+  <div class="board">
+    <div class="card clip"><h2>Chart</h2>
+      ${lab('Blood pressure',`${p.sbp}/${p.dbp}`,'mmHg',delta(p.sbp,q&&q.sbp),fb)}
+      ${lab('Heart rate',p.hr,'bpm',delta(p.hr,q&&q.hr),fh)}
+      ${lab('Potassium',p.k.toFixed(1),'mmol/L',delta(p.k,q&&q.k,1),fk)}
+      ${lab('eGFR',p.egfr,'mL/min/1.73m²',delta(p.egfr,q&&q.egfr),fg)}
+      ${lab('Weight',wt.toFixed(1),'kg',q?delta(wt,wq,1):'baseline','')}
+      ${lab('NYHA class',roman[nyha(p)],'symptoms',`LVEF ${c.ef}%`,'')}
+      <p class="hx">${c.hx}</p></div>
+    <div class="card"><h2>Medicine cabinet <span class="sub">Fill each bottle to its target ★ · <button class="link" data-act="ref" style="color:var(--c-raas)">Dosing card</button></span></h2>
+      <div id="cabinet">${cabinetInner()}</div></div>
+  </div>${S.feedback?reviewHTML():''}`;
+}
+function changes(){return Object.values(S.actions).filter(a=>a!=='keep').length}
+function actBtns(slot,lvl,max,locked){
+  const a=S.actions[slot];
+  const opts=[['stop','Stop',lvl===0],['down','−',lvl===0||max===1],['keep','Same',false],['up',lvl===0?'Start':'+',lvl>=max]];
+  return `<div class="acts" role="group" aria-label="${slot} order">${opts.map(([v,l,dis])=>`<button class="act" id="${slot}-${v}" data-act="set" data-slot="${slot}" data-v="${v}" aria-pressed="${a===v}" ${dis||locked?'disabled':''}>${l}</button>`).join('')}</div>`;
+}
+function bottleHTML(slot){
+  const p=S.p,a=S.actions[slot],d=drugOf(p,slot),lvl=p[slot];
+  let next=applyLvl(lvl,a,d.max),nd=d,sw=false;
+  if(slot==='raas'&&(a==='switchWash'||a==='switchNow')){nd=DR.ARNI;next=lvl>=2?2:1;sw=true}
+  const locked=slot==='raas'&&p.raasLocked,ace=slot==='raas'&&p.raasDrug==='ACEi';
+  let segs='';
+  for(let i=d.max;i>=1;i--){let cl='seg';
+    if(sw){if(i<=next)cl+=' sw'}else if(i<=lvl&&i<=next)cl+=' on'+(ace?' ace':'');else if(i>lvl&&i<=next)cl+=' up';else if(i<=lvl&&i>next)cl+=' down';
+    segs+=`<div class="${cl}"></div>`}
+  const changed=sw||next!==lvl;
+  const dose=locked?'<span class="locked">Off the table after angioedema</span>':`${d.doses[lvl]}${changed?`<br>→ <b>${nd!==d?'ARNI ':''}${nd.doses[next]}</b>`:''}`;
+  const swRow=ace&&!locked?`<div class="switch">
+    <button class="act" id="raas-switchWash" data-act="set" data-slot="raas" data-v="switchWash" aria-pressed="${a==='switchWash'}">Switch to ARNI after 36-h washout</button>
+    <button class="act" id="raas-switchNow" data-act="set" data-slot="raas" data-v="switchNow" aria-pressed="${a==='switchNow'}">Switch to ARNI today</button></div>`:'';
+  const cls=slot==='raas'?(p.raasDrug==='ACEi'?'ACE inhibitor':'ARNI'):d.cls;
+  const nm=slot==='raas'&&!p.raasDrug?'Sacubitril/valsartan':d.name;
+  return `<div class="bottle b-${slot}"><div class="bname"><div class="cls">${cls}</div><div class="drug">${nm}</div></div>
+    <div class="cap"></div><div class="jar" aria-label="${nm} dose step ${lvl} of ${d.max}"><span class="goal">★ ${nd.doses[nd.max].replace(' daily','').replace(' bid',' bid')}</span>${segs}</div>
+    <div class="dose">${dose}</div>${actBtns(slot,lvl,d.max,locked)}${swRow}</div>`;
+}
+function cabinetInner(){
+  const p=S.p,d=DR.loop,a=S.actions.loop,lvl=p.loop,next=applyLvl(lvl,a,d.max);
+  let segs='';for(let i=1;i<=d.max;i++){let cl='seg';if(i<=lvl&&i<=next)cl+=' on';else if(i>lvl&&i<=next)cl+=' up';else if(i<=lvl&&i>next)cl+=' down';segs+=`<div class="${cl}"></div>`}
+  const n=changes();
+  return `<div class="shelf">${SLOTS.map(bottleHTML).join('')}</div>
+   <div class="loop b-loop"><div class="bname"><div class="cls">Water pill</div><div class="drug">Furosemide · ${d.doses[lvl]}${next!==lvl?` → <b style="color:var(--c-loop)">${d.doses[next]}</b>`:''}</div></div>
+   <div class="hjar">${segs}</div>${actBtns('loop',lvl,d.max,false)}</div>
+   <div class="signrow"><span class="cnt">${n} change${n===1?'':'s'} ordered</span><button class="btn gold" data-act="sign" id="sign-btn">Sign orders ✓</button></div>`;
+}
+function reviewHTML(){
+  const f=S.feedback,last=S.visit+1>=VISITS,out=S.strikes>=3;
+  const verdict=out?'That’s three strikes.':f.str?'Hold on. That wasn’t safe.':f.pts>=200?'Excellent work!':f.pts>=100?'Nice job.':f.pts>=0?'Reasonable.':'We can do better.';
+  return `<div class="scrim"></div><div class="modal card" role="dialog" aria-modal="true" aria-labelledby="rv">
+   <div class="rev-head">${portrait(ATTENDING,f.str?'worried':f.pts>=100?'happy':'neutral','#fff')}<div><div class="tag" style="color:var(--pmuted)">Dr. Navarro · Attending review</div><h2 class="verdict" id="rv">${verdict}</h2></div></div>
+   <div>${f.items.map(i=>`<div class="item"><span class="badge bg-${i.t}">${LABEL[i.t]}</span><span>${h(i.x)}</span><span class="pts c-${i.t}">${PTS[i.t]>0?'+':''}${PTS[i.t]}</span></div>`).join('')}</div>
+   <div class="rev-foot"><span class="big ${f.pts>=0?'c-good':'c-harm'}">${f.pts>0?'+':''}${f.pts}${f.str?` <span class="c-harm" style="font-size:18px">· lost ${f.str} heart${f.str>1?'s':''}</span>`:''}</span>
+   <button class="btn gold" id="next-btn" data-act="next">${out?'End case':last?'See the 12-week outcome':'Next visit: week '+(S.visit*2+2)+' →'}</button></div></div>`;
+}
+function startHTML(){
+  const D=DOCS[S.docLook];
+  return `<div class="title-stage"><div class="stage">${roomSVG({doc:D,docMood:'happy'})}
+    <div class="title-over"><div class="logo">Four Pillars<small>Clinic</small></div><button class="btn gold" data-act="case" data-i="0">Start shift ▶</button></div></div></div>
+  <div class="intro">
+    <div class="card"><h2>How to play</h2><div class="rules">
+      <div><b>See your patient</b>They come back every 2 weeks for six visits. Listen, examine, read the labs.</div>
+      <div><b>Fill the bottles</b>Start and raise the four pillars of HFrEF therapy toward their target ★ doses.</div>
+      <div><b>Stay safe</b>Unsafe orders and ED visits cost a heart. Lose three and the case ends.</div>
+      <div><b>Beat inertia</b>Sound moves +100. Missed chances −60. Unsafe orders −150.</div></div></div>
+    <div class="card"><h2>Your doctor</h2><div class="avatars" role="group" aria-label="Choose your doctor">${DOCS.map((d,i)=>`<button class="avatar" data-act="look" data-i="${i}" aria-pressed="${S.docLook===i}" aria-label="Doctor ${i+1}">${portrait(d,'happy','#fff')}</button>`).join('')}</div>
+      <div class="field" style="margin-top:14px"><label for="learner">Name or learner ID</label><input id="learner" value="${h(S.learner)}" placeholder="Shown on your results"></div></div>
+  </div>
+  <div class="secheader"><h2>Today’s patients</h2><div class="row"><button class="link" data-act="ref">Dosing card</button>${S.results.length?'<button class="link" data-act="summary">Results</button>':''}</div></div>
+  <div class="cases">${CASES.map((c,i)=>{const r=S.results.find(x=>x.id===c.id),s=c.start;return `<button class="case card" data-act="case" data-i="${i}">
+    <div class="top">${portrait(c.look,i===2?'dizzy':'neutral')}<div><div class="tag" style="color:var(--pmuted)">Case ${i+1}</div><h3>${c.name}, ${c.age}</h3><div class="stars" aria-label="Difficulty ${c.lvl} of 3">${'●'.repeat(c.lvl)}${'○'.repeat(3-c.lvl)}</div></div></div>
+    <p><b style="color:var(--pink)">${c.title}.</b> ${c.blurb}</p>
+    <div class="vit"><span>BP ${s.sbp}/${s.dbp}</span><span>HR ${s.hr}</span><span>K ${s.k.toFixed(1)}</span><span>eGFR ${s.egfr}</span><span>EF ${c.ef}%</span></div>
+    ${r?`<div class="done">Done · ${r.score} pts · ${'★'.repeat(r.stars)}${'☆'.repeat(3-r.stars)}</div>`:''}</button>`}).join('')}</div>
+  <p class="foot">Simulated patients and simplified physiology for education, not clinical guidance. Thresholds follow the 2022 AHA/ACC/HFSA heart failure guideline and the 2024 ACC Expert Consensus Decision Pathway for HFrEF. Each case uses a fixed random seed, so every learner meets the same patient.</p>`;
+}
+function debriefHTML(){
+  const r=S.last,c=CASES.find(x=>x.id===r.id),p=r.p,ci=CASES.indexOf(c);
+  const ttl=r.failed?'Case ended early':r.stars===3?'Four-pillar finish!':r.stars===2?'Solid progress':'Keep practicing';
+  const rd=p.raasDrug?DR[p.raasDrug]:DR.ARNI;
+  const bar=(slot,lbl,lvl,max,txt)=>`<div class="bar b-${slot}"><span>${lbl}</span><div class="track"><span style="width:${lvl/max*100}%"></span></div><span class="num">${Math.round(lvl/max*100)}%</span></div><div class="bsub">${txt}</div>`;
+  const met=(k,v,s,col)=>`<div class="metric"><div class="k">${k}</div><b ${col?`style="color:${col}"`:''}>${v}</b><div class="s">${s}</div></div>`;
+  return `<div class="deb">
+   <div class="hud" style="position:static"><button class="homebtn" data-act="home" aria-label="Back to the case list"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 11 L12 3 L21 11 V21 H15 V14 H9 V21 H3Z" fill="${O}"/></svg></button><div class="chip"><span class="k">Debrief</span>${c.name}</div></div>
+   <div class="card deb-hero">${portrait(c.look,r.failed?'sad':r.stars>=2?'happy':'neutral')}
+     <div><div class="tag" style="color:var(--pmuted)">Case ${ci+1} · ${r.failed?`stopped at week ${r.visits*2}`:'12-week outcome'}</div><h1 style="font-size:clamp(28px,4.5vw,44px)">${ttl}</h1>
+     ${r.failed?'<p style="color:var(--pmuted);margin-top:6px">Three strikes. The inpatient team has taken over.</p>':`<p style="color:var(--pmuted);margin-top:6px">${c.name} says: “${r.stars>=2?'I feel like a new person. Thank you, doctor.':'I’m doing a bit better, I think.'}”</p>`}</div>
+     <div class="scorebox" style="text-align:right"><div class="bigstars" aria-label="${r.stars} of 3 stars">${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(3-r.stars)}</span></div><div class="big">${r.score} pts</div><div style="font-size:12px;color:var(--pmuted)">${r.raw} visit pts + ${r.bonus} outcome bonus</div></div></div>
+   <div class="metrics">
+     ${met('Pillar power',r.idx,'GDMT index of 100')}
+     ${met('Pillars on board',r.on+'/4',r.all4!=null?`all four by week ${r.all4}`:'not all four started')}
+     ${met('Hearts lost',r.strikes,`${r.harms} unsafe orders, ${r.events} ED visits`,r.strikes?'var(--bad)':'var(--good)')}
+     ${met('Missed chances',r.misses,`${r.inertia} visit${r.inertia===1?'':'s'} of clinical inertia`,r.misses?'var(--miss)':'var(--good)')}
+     ${met('Sound moves',r.goods,`${r.cautions} cautions`)}
+     ${met('Decision time',Math.round(r.avg)+'s','average per visit')}
+     ${met('Projected LVEF',r.efProj+'%',`from ${c.ef}% at 6 months (simulated)`)}
+     ${met('Final vitals',`<span style="font-size:18px">${p.sbp}/${p.dbp} · K ${p.k.toFixed(1)}</span>`,`HR ${p.hr} · eGFR ${p.egfr}`)}
+   </div>
+   <div class="two">
+     <div class="card"><h2>Bottle levels</h2><div class="bars">
+       ${bar('raas',p.raasDrug==='ACEi'?'ACEi':'ARNI',p.raas,3,p.raasLocked?'Off the table after angioedema':`${rd.name} ${rd.doses[p.raas]}`)}
+       ${bar('bb','Beta-blocker',p.bb,4,`Carvedilol ${DR.bb.doses[p.bb]}`)}
+       ${bar('mra','MRA',p.mra,2,`Spironolactone ${DR.mra.doses[p.mra]}`)}
+       ${bar('sglt','SGLT2i',p.sglt,1,`Dapagliflozin ${DR.sglt.doses[p.sglt]}`)}</div></div>
+     <div class="card"><h2>Teaching points</h2><ul class="teach">${c.teach.map(t=>`<li>${t}</li>`).join('')}</ul></div></div>
+   <div class="row"><button class="btn plain" data-act="replay">Replay case</button>${ci<CASES.length-1?`<button class="btn gold" data-act="case" data-i="${ci+1}">Next patient: ${CASES[ci+1].name} ▶</button>`:''}<button class="btn plain" data-act="summary">All results</button></div>
+  </div>`;
+}
+function resultsText(){
+  const d=new Date().toISOString().slice(0,10);
+  let t=`Four Pillars Clinic results · ${S.learner||'Learner'} · ${d}\n`;
+  S.results.forEach(r=>{t+=`${r.name}: score ${r.score}, stars ${r.stars}/3, GDMT index ${r.idx}, pillars ${r.on}/4${r.all4!=null?` by wk ${r.all4}`:''}, strikes ${r.strikes}, missed ${r.misses}, inertia visits ${r.inertia}, avg decision ${Math.round(r.avg)}s${r.failed?', ended early':''}\n`});
+  return t;
+}
+function summaryHTML(){
+  const tot=S.results.reduce((a,r)=>a+r.score,0);
+  return `<div class="deb"><div class="hud" style="position:static"><button class="homebtn" data-act="home" aria-label="Back to the case list"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 11 L12 3 L21 11 V21 H15 V14 H9 V21 H3Z" fill="${O}"/></svg></button><div class="chip"><span class="k">Results</span>${S.learner?h(S.learner):'This session'}</div><div class="grow"></div><div class="chip"><span class="k">Total</span><b>${tot}</b></div></div>
+  ${S.results.length?`<div class="card tbl"><table><thead><tr><th>Patient</th><th>Stars</th><th>GDMT index</th><th>Pillars</th><th>Hearts lost</th><th>Missed</th><th>Inertia</th><th>Avg time</th><th>Score</th></tr></thead><tbody>
+   ${S.results.map(r=>`<tr><td><b>${r.name}</b>${r.failed?'<div style="font-size:12px;color:var(--pmuted)">Ended early</div>':''}</td><td>${'★'.repeat(r.stars)||'—'}</td><td class="n">${r.idx}</td><td class="n">${r.on}/4${r.all4!=null?` · wk ${r.all4}`:''}</td><td class="n">${r.strikes}</td><td class="n">${r.misses}</td><td class="n">${r.inertia}</td><td class="n">${Math.round(r.avg)}s</td><td class="n">${r.score}</td></tr>`).join('')}</tbody></table></div>
+   <div class="card"><h2>Competency benchmarks</h2><ul class="teach">
+     <li><b>Optimization:</b> GDMT index of 75 or more at week 12, with all four pillars started.</li>
+     <li><b>Safety:</b> no hearts lost (no unsafe orders, no ED visits).</li>
+     <li><b>Timeliness:</b> all four pillars on board by week 4, with no visits of clinical inertia.</li></ul></div>
+   <div class="row"><button class="btn gold" data-act="copy">Copy results</button><button class="btn plain" data-act="home">Play another case</button></div>
+   ${S.copyText?`<div><p style="font-size:14px;margin-bottom:6px">${S.copyText==='ok'?'Copied to clipboard.':'Select the text below and copy it.'}</p>${S.copyText==='ok'?'':`<textarea class="copybox" id="copybox" readonly>${h(resultsText())}</textarea>`}</div>`:''}`
+   :'<div class="card"><p>Finish a case to see results here.</p></div><div class="row"><button class="btn gold" data-act="home">Choose a patient</button></div>'}
+  </div>`;
+}
+function refHTML(){
+  return `<div class="scrim" data-act="closeref"></div><div class="modal card" role="dialog" aria-modal="true" aria-labelledby="ref-t" style="z-index:31">
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 id="ref-t">Dosing card</h2><button class="btn plain" data-act="closeref" id="closeref" style="padding:6px 14px;font-size:14px">Close</button></div>
+   <div class="tbl"><table class="reftbl"><thead><tr><th>Pillar</th><th>Start</th><th>Target</th><th>Don’t start or raise when</th></tr></thead><tbody>
+   <tr><td style="color:var(--c-raas)">Sacubitril/valsartan</td><td class="n">24/26 mg bid<br><span style="color:var(--pmuted)">49/51 if on moderate-dose ACEi</span></td><td class="n">97/103 mg bid</td><td>SBP under 100, K over 5.0, within 36 h of the last ACEi dose, any history of angioedema</td></tr>
+   <tr><td style="color:var(--c-bb)">Carvedilol</td><td class="n">3.125 mg bid</td><td class="n">25 mg bid</td><td>Congested, HR under 60, SBP under 90</td></tr>
+   <tr><td style="color:var(--c-mra)">Spironolactone</td><td class="n">12.5 mg daily</td><td class="n">25 mg daily</td><td>K over 5.0 or eGFR under 30. Hold if K is over 5.5.</td></tr>
+   <tr><td style="color:var(--c-sglt)">Dapagliflozin</td><td class="n">10 mg daily</td><td class="n">10 mg daily</td><td>eGFR under 25. Expect a small early eGFR dip.</td></tr>
+   <tr><td style="color:var(--c-loop)">Furosemide</td><td colspan="2">Titrate to volume status</td><td>Lower it when dry or orthostatic to make room for GDMT</td></tr></tbody></table></div>
+   <p style="font-size:13px;color:var(--pmuted);margin-top:10px">A creatinine rise under 30% after starting ARNI or SGLT2i is expected. Simplified for teaching from the 2022 AHA/ACC/HFSA guideline and the 2024 ACC ECDP for HFrEF.</p></div>`;
+}
+function render(){
+  const fid=document.activeElement&&document.activeElement.id;
+  let html='';
+  if(S.screen==='start')html=startHTML();
+  else if(S.screen==='visit')html=hudHTML()+visitHTML();
+  else if(S.screen==='debrief')html=debriefHTML();
+  else html=summaryHTML();
+  if(S.showRef)html+=refHTML();
+  app.innerHTML=html;S.anim=false;
+  if(fid&&fid!=='next-btn'){const el=document.getElementById(fid);if(el)el.focus({preventScroll:true})}
+}
+function updateCabinet(){
+  const fid=document.activeElement&&document.activeElement.id;
+  const el=document.getElementById('cabinet');if(!el){render();return}
+  el.innerHTML=cabinetInner();
+  if(fid){const f=document.getElementById(fid);if(f)f.focus({preventScroll:true})}
+}
+const app=document.getElementById('app');
+app.addEventListener('input',e=>{if(e.target.id==='learner'){S.learner=e.target.value;try{localStorage.setItem('fp-learner',S.learner)}catch(_){}}});
+app.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
+  const a=b.dataset.act;
+  if(a==='case')startCase(+b.dataset.i);
+  else if(a==='set'){S.actions[b.dataset.slot]=b.dataset.v;updateCabinet()}
+  else if(a==='look'){S.docLook=+b.dataset.i;try{localStorage.setItem('fp-doc',S.docLook)}catch(_){}render()}
+  else if(a==='sign')sign();
+  else if(a==='next')nextVisit();
+  else if(a==='replay')startCase(S.ci);
+  else if(a==='home'){S.screen='start';S.feedback=null;render();window.scrollTo(0,0)}
+  else if(a==='summary'){S.screen='summary';S.copyText=null;render();window.scrollTo(0,0)}
+  else if(a==='ref'){S.showRef=true;render();document.getElementById('closeref')?.focus()}
+  else if(a==='closeref'){S.showRef=false;render()}
+  else if(a==='copy'){
+    const t=resultsText();
+    const fail=()=>{S.copyText='manual';render();const tb=document.getElementById('copybox');if(tb){tb.focus();tb.select()}};
+    try{navigator.clipboard.writeText(t).then(()=>{S.copyText='ok';render()},fail)}catch(_){fail()}
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.showRef){S.showRef=false;render()}});
+render();
+</script>
+
+</body></html>
